@@ -1,0 +1,59 @@
+# Reusable: build ONE unsigned native-driver bundle for one (os, arch).
+#
+# SECURITY: this workflow declares NO `secrets:` and uses none. It only downloads
+# a pinned, sha256-verified vendor package and relocates it into a portable bundle.
+# Signing + publishing happen elsewhere (the private app repo). Callable cross-repo
+# so flextable-cli-tools can reuse it:
+#   uses: flex-table/flextable-drivers/.github/workflows/build-bundle.yml@main
+name: build-bundle
+
+on:
+  workflow_call:
+    inputs:
+      namespace: { required: true,  type: string }   # e.g. oracle-instantclient
+      major:     { required: true,  type: string }   # e.g. "23"
+      os:        { required: true,  type: string }   # macos | linux | windows
+      arch:      { required: true,  type: string }   # arm64 | x86_64
+      runner:    { required: true,  type: string }   # runner label for this leg
+    outputs:
+      artifact:
+        description: "Name of the uploaded bundle artifact"
+        value: ${{ jobs.bundle.outputs.artifact }}
+
+permissions:
+  contents: read            # least privilege; no write, no packages, no id-token
+
+jobs:
+  bundle:
+    runs-on: ${{ inputs.runner }}
+    outputs:
+      artifact: ${{ steps.meta.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: meta
+        shell: bash
+        run: echo "name=${{ inputs.namespace }}-${{ inputs.major }}-${{ inputs.os }}-${{ inputs.arch }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build bundle (unix)
+        if: inputs.os != 'windows'
+        shell: bash
+        env:
+          BUNDLE_NAMESPACE: ${{ inputs.namespace }}
+        run: |
+          set -euo pipefail
+          scripts/bundle_${{ inputs.os }}.sh "${{ inputs.namespace }}" "${{ inputs.major }}" "${{ inputs.arch }}" dist
+
+      - name: Build bundle (windows)
+        if: inputs.os == 'windows'
+        shell: pwsh
+        run: |
+          scripts/bundle_windows.ps1 -Namespace "${{ inputs.namespace }}" -Major "${{ inputs.major }}" -Arch "${{ inputs.arch }}" -Out dist
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.name }}
+          path: dist/${{ steps.meta.outputs.name }}.zip
+          if-no-files-found: error
+          retention-days: 7

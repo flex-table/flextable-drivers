@@ -1,0 +1,28 @@
+{
+  "_comment": "Pinned Oracle Instant Client BASIC sources per (os, arch). Every URL is an official Oracle download; every sha256 is verified before bundling. major=23 (IC is backward-compatible -> one major, not per-server-version). BASIC (full charset/libociei), not Basic Lite. Redistribution is under the OTN license (see the app repo docs/legal/oracle-instant-client.md) - keep these bytes OUT of the freely-licensed cli-tools manifest.",
+  "namespace": "oracle-instantclient",
+  "major": "23",
+  "package": "basic",
+  "targets": {
+    "macos-arm64": {
+      "url": "https://download.oracle.com/otn_software/mac/instantclient/233023/instantclient-basic-macos.arm64-23.3.0.23.09-1.dmg",
+      "sha256": "1bcddb583870f70c232d579edb8a32fd58497028a4eff1ad28ece0397ba8d7fe",
+      "format": "dmg"
+    },
+    "linux-x86_64": {
+      "url": "TODO-pin-oracle-ic-basic-linux-x64-zip-url",
+      "sha256": "TODO-sha256",
+      "format": "zip"
+    },
+    "windows-x86_64": {
+      "url": "TODO-pin-oracle-ic-basic-windows-x64-zip-url",
+      "sha256": "TODO-sha256",
+      "format": "zip"
+    },
+    "macos-x86_64": {
+      "url": "TODO-pin-oracle-ic-basic-macos-x64-dmg-url",
+      "sha256": "TODO-sha256",
+      "format": "dmg"
+    }
+  }
+}

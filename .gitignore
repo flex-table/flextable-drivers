@@ -1,0 +1,19 @@
+# SECURITY: this PUBLIC repo must stay SECRET-FREE by construction.
+# It only builds UNSIGNED bundles. Signing + publishing happen in the private
+# app repo. Never let a signing seed, key, or credential land here.
+sign-manifest/
+*.seed
+*.key
+*.pem
+*.p12
+*.pfx
+.env
+.env.*
+
+# Build output (bundles are uploaded as workflow artifacts, never committed)
+dist/
+*.zip
+*.dmg
+*.tgz
+*.tar.gz
+downloads/

@@ -1,0 +1,76 @@
+# Build native-driver bundles - GENERIC + INCREMENTAL.
+#
+# Dispatch picks ONE engine (`namespace`) and which `targets` to build, so adding
+# a new engine or backfilling one target NEVER rebuilds what already exists. The
+# `plan` job derives the matrix from config/<namespace>.json (skipping any target
+# whose url/sha is still TODO); the `build` job runs the reusable build-bundle.yml
+# once per selected target on its own OS runner.
+#
+# Add a new engine: drop a config/<engine>.json + (if its sourcing differs) extend
+# the bundle scripts, then dispatch namespace=<engine>. Existing engines' bundles
+# are untouched here, and the app-repo publish merges non-destructively
+# (build_manifest.py --merge-from-url), so their manifest leaves survive too.
+name: build
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: "Engine namespace (matches config/<namespace>.json), e.g. oracle-instantclient"
+        required: true
+        type: string
+      targets:
+        description: "Comma list of <os>-<arch> to build, or 'all' for every pinned target"
+        required: false
+        default: "all"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: gen
+        shell: bash
+        env:
+          NS: ${{ inputs.namespace }}
+          WANT: ${{ inputs.targets }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          ns, want = os.environ["NS"], os.environ["WANT"].strip()
+          cfg = json.load(open(f"config/{ns}.json"))
+          major = str(cfg["major"])
+          # os -> runner label. macOS + Intel-macOS need self-hosted; linux/windows are free hosted.
+          RUNNER = {"macos-arm64":"macos-local","macos-x86_64":"macos-13",
+                    "linux-x86_64":"ubuntu-latest","windows-x86_64":"windows-latest"}
+          picked = [t.strip() for t in want.split(",")] if want and want!="all" else list(cfg["targets"])
+          incl=[]
+          for t in picked:
+              spec = cfg["targets"].get(t)
+              if not spec: raise SystemExit(f"target {t} not in config/{ns}.json")
+              if "TODO" in (spec["url"]+spec["sha256"]):
+                  print(f"::warning::skipping {ns} {t} - url/sha not pinned yet", flush=True); continue
+              osname, arch = t.rsplit("-",1)
+              incl.append({"namespace":ns,"major":major,"os":osname,"arch":arch,"runner":RUNNER[t]})
+          if not incl: raise SystemExit("no pinned targets to build")
+          print("matrix=" + json.dumps({"include": incl}))
+          PY
+
+  build:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: ./.github/workflows/build-bundle.yml
+    with:
+      namespace: ${{ matrix.namespace }}
+      major: ${{ matrix.major }}
+      os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
+      runner: ${{ matrix.runner }}
