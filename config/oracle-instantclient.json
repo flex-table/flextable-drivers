@@ -10,13 +10,13 @@
       "format": "dmg"
     },
     "linux-x86_64": {
-      "url": "TODO-pin-oracle-ic-basic-linux-x64-zip-url",
-      "sha256": "TODO-sha256",
+      "url": "https://download.oracle.com/otn_software/linux/instantclient/2326300/instantclient-basic-linux.x64-23.26.3.0.0.zip",
+      "sha256": "fce485361332927f8328ea4b68d98968c6b0ea124e62470de8c9d0cef880130e",
       "format": "zip"
     },
     "windows-x86_64": {
-      "url": "TODO-pin-oracle-ic-basic-windows-x64-zip-url",
-      "sha256": "TODO-sha256",
+      "url": "https://download.oracle.com/otn_software/nt/instantclient/2326300/instantclient-basic-windows.x64-23.26.3.0.0.zip",
+      "sha256": "4c7fe8a77f6b9a00d57214ffda241f14f79dad5774a8f53073b7497e54b51763",
       "format": "zip"
     },
     "macos-x86_64": {
