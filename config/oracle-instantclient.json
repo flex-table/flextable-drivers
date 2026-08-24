@@ -20,8 +20,9 @@
       "format": "zip"
     },
     "macos-x86_64": {
-      "url": "TODO-pin-oracle-ic-basic-macos-x64-dmg-url",
-      "sha256": "TODO-sha256",
+      "_deferred": "DEFERRED, not a pending backfill: Oracle ships NO 23.x Instant Client for macOS Intel - it stopped at 19.8 (21c/23c are Apple-Silicon-only on macOS). Intel Macs are a shrinking niche, so this target is intentionally skipped (the build plan skips a TODO url). To enable it, pin the 19.8 macOS-x64 Basic DMG + sha here (accepting a 19.x client for Intel while other platforms run 23.x).",
+      "url": "TODO-deferred-oracle-has-no-23x-macos-intel-ic",
+      "sha256": "TODO-deferred",
       "format": "dmg"
     }
   }
