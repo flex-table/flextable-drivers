@@ -41,7 +41,7 @@ jobs:
           NS: ${{ inputs.namespace }}
           WANT: ${{ inputs.targets }}
         run: |
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
           import json, os
           ns, want = os.environ["NS"], os.environ["WANT"].strip()
           cfg = json.load(open(f"config/{ns}.json"))
@@ -60,7 +60,11 @@ jobs:
               osname, arch = t.rsplit("-",1)
               incl.append({"namespace":ns,"major":major,"os":osname,"arch":arch,"runner":RUNNER[t]})
           if not incl: raise SystemExit("no pinned targets to build")
-          print("matrix=" + json.dumps({"include": incl}))
+          # matrix -> GITHUB_OUTPUT via the file API; warnings above go to stdout (the log).
+          # (Redirecting the whole script to $GITHUB_OUTPUT would push a ::warning:: line
+          # into it and fail with "Invalid format".)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("matrix=" + json.dumps({"include": incl}) + "\n")
           PY
 
   build:
