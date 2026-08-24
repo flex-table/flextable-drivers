@@ -56,4 +56,8 @@ jobs:
           name: ${{ steps.meta.outputs.name }}
           path: dist/${{ steps.meta.outputs.name }}.zip
           if-no-files-found: error
-          retention-days: 7
+          # These native-driver bundles are large (~hundreds of MB) and only need to
+          # live long enough for the app-repo publish job to pull + sign them. Keep the
+          # shortest retention so they don't linger and blow the account's shared
+          # Actions storage quota (500 MB on the free tier). Delete them after publish.
+          retention-days: 1
