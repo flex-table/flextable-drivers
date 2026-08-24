@@ -46,8 +46,9 @@ jobs:
           ns, want = os.environ["NS"], os.environ["WANT"].strip()
           cfg = json.load(open(f"config/{ns}.json"))
           major = str(cfg["major"])
-          # os -> runner label. macOS + Intel-macOS need self-hosted; linux/windows are free hosted.
-          RUNNER = {"macos-arm64":"macos-local","macos-x86_64":"macos-13",
+          # os -> GitHub-HOSTED runner. This repo is PUBLIC, so hosted macOS is FREE
+          # (macos-14 = Apple Silicon/arm64, macos-13 = Intel/x86_64) - no self-hosted runner.
+          RUNNER = {"macos-arm64":"macos-14","macos-x86_64":"macos-13",
                     "linux-x86_64":"ubuntu-latest","windows-x86_64":"windows-latest"}
           picked = [t.strip() for t in want.split(",")] if want and want!="all" else list(cfg["targets"])
           incl=[]

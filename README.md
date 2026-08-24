@@ -33,12 +33,15 @@ contract (single top-level dir = bundle root; the app copies its contents into
 Oracle Instant Client (`oracle-instantclient`, major `23` - the client is
 backward-compatible, so one major, not per-server-version):
 
-| Target | Runner | Status |
+This repo is **public**, so every leg runs on a FREE GitHub-hosted runner - no
+self-hosted runner needed (hosted macOS is only billed 10x on *private* repos).
+
+| Target | Runner (GitHub-hosted, free for public repo) | Status |
 |---|---|---|
-| `macos-arm64` | self-hosted `macos-local` | pinned (Basic 23.3 arm64) |
-| `linux-x86_64` | hosted `ubuntu-latest` | TODO: pin the Oracle IC linux URL + sha |
-| `windows-x86_64` | hosted `windows-latest` | TODO: pin the Oracle IC windows URL + sha |
-| `macos-x86_64` | self-hosted Intel (`macos-13`) | backfill later |
+| `macos-arm64` | `macos-14` (Apple Silicon) | pinned (Basic 23.3 arm64) |
+| `linux-x86_64` | `ubuntu-latest` | TODO: pin the Oracle IC linux URL + sha |
+| `windows-x86_64` | `windows-latest` | TODO: pin the Oracle IC windows URL + sha |
+| `macos-x86_64` | `macos-13` (Intel) | backfill later |
 
 ## How to build (generic + incremental)
 
