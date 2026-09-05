@@ -42,6 +42,19 @@ unzip -q "$WORK/pkg.zip" -d "$WORK/x"
 ICDIR="$(dirname "$(find "$WORK/x" -name 'libclntsh.so*' | head -1)")"
 for f in "$ICDIR"/*.so*; do [ -e "$f" ] && cp -L "$f" "$STAGE/"; done
 
+# OTN condition: Oracle's notices must travel WITH the redistributed libraries.
+# The Instant Client package carries them beside the libs as BASIC_LICENSE / BASIC_README
+# (verified against instantclient-basic-linux.x64-23.26.3.0.0). Fail loudly if none is
+# found rather than shipping a bundle that silently drops the licence.
+echo "==> stage Oracle notices (BASIC_LICENSE / BASIC_README)"
+found=0
+for f in "$ICDIR"/*LICENSE* "$ICDIR"/*README*; do
+  [ -e "$f" ] || continue
+  cp -L "$f" "$STAGE/"; found=$((found+1))
+done
+[ "$found" -gt 0 ] || { echo "ERROR: no Oracle LICENSE/README found in $ICDIR - refusing to ship without the notices"; exit 4; }
+echo "    staged $found notice file(s)"
+
 echo "==> bundle libaio.so.1 (the client's DT_NEEDED)"
 # The Instant Client links against libaio.so.1, which is NOT part of Oracle's zip and is
 # absent on minimal distros/containers -> DPI-1047 "libaio.so.1: cannot open shared object

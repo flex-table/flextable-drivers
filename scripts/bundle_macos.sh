@@ -54,6 +54,19 @@ MP="$(hdiutil attach "$WORK/pkg.dmg" -nobrowse -readonly | grep -o '/Volumes/.*'
 # cp -RL follows symlinks so the bundle contains real files only (the installer's
 # copy_tree rejects symlinks as a path-escape guard). Copy the loadable libs.
 for f in "$MP"/*.dylib*; do [ -e "$f" ] && cp -RL "$f" "$STAGE/"; done
+
+# OTN condition: Oracle's notices must travel WITH the redistributed libraries.
+# The Instant Client package carries them beside the libs as BASIC_LICENSE / BASIC_README
+# (verified against instantclient-basic-linux.x64-23.26.3.0.0). Fail loudly if none is
+# found rather than shipping a bundle that silently drops the licence.
+echo "==> stage Oracle notices (BASIC_LICENSE / BASIC_README)"
+found=0
+for f in "$MP"/*LICENSE* "$MP"/*README*; do
+  [ -e "$f" ] || continue
+  cp -RL "$f" "$STAGE/"; found=$((found+1))
+done
+[ "$found" -gt 0 ] || { echo "ERROR: no Oracle LICENSE/README found in $MP - refusing to ship without the notices"; exit 4; }
+echo "    staged $found notice file(s)"
 hdiutil detach "$MP" >/dev/null; MP=""
 
 echo "==> rewrite load paths -> @loader_path (libs find siblings with no DYLD)"

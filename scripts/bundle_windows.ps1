@@ -42,6 +42,14 @@ Expand-Archive -Path $pkg -DestinationPath (Join-Path $work "x") -Force
 $icdir = Split-Path -Parent (Get-ChildItem -Recurse -Path (Join-Path $work "x") -Filter "oci.dll" | Select-Object -First 1).FullName
 Get-ChildItem -Path $icdir -Filter *.dll | ForEach-Object { Copy-Item $_.FullName $stage }
 
+# OTN condition: Oracle's notices must travel WITH the redistributed libraries. The Instant
+# Client package carries them beside the libs as BASIC_LICENSE / BASIC_README. Fail loudly if
+# none is found rather than shipping a bundle that silently drops the licence.
+$notices = Get-ChildItem -Path $icdir | Where-Object { $_.Name -match 'LICENSE|README' }
+if (-not $notices) { throw "ERROR: no Oracle LICENSE/README found in $icdir - refusing to ship without the notices" }
+$notices | ForEach-Object { Copy-Item $_.FullName $stage }
+Write-Host "    staged $($notices.Count) notice file(s)"
+
 Write-Host "==> zip + sha256"
 $zip = Join-Path $Out "$name.zip"
 Compress-Archive -Path $stage -DestinationPath $zip -Force
