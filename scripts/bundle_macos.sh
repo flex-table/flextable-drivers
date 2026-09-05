@@ -24,8 +24,18 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 TARGET="macos-${ARCH}"
 CFG="${ROOT}/config/${NS}.json"
-URL="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['targets'][sys.argv[2]]['url'])" "$CFG" "$TARGET")"
-SHA="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['targets'][sys.argv[2]]['sha256'])" "$CFG" "$TARGET")"
+# Multi-major configs nest their pinned targets under `majors.<major>.targets`; the
+# original single-major shape kept a flat `targets` map. Read BOTH so a namespace that
+# only ever ships one major needs no migration.
+PIN="$(python3 -c '
+import json,sys
+cfg=json.load(open(sys.argv[1])); target=sys.argv[2]; major=str(sys.argv[3])
+t=(cfg.get("majors",{}).get(major,{}).get("targets") or cfg.get("targets",{})).get(target)
+if not t: raise SystemExit("target %s (major %s) not pinned in config" % (target, major))
+print(t["url"]); print(t["sha256"])
+' "$CFG" "$TARGET" "$MAJOR")"
+URL="$(printf "%s\n" "$PIN" | sed -n 1p)"
+SHA="$(printf "%s\n" "$PIN" | sed -n 2p)"
 case "$URL$SHA" in *TODO*) echo "ERROR: $TARGET not pinned in $CFG (URL/sha are TODO)"; exit 2;; esac
 
 NAME="${NS}-${MAJOR}-macos-${ARCH}"
@@ -44,6 +54,19 @@ MP="$(hdiutil attach "$WORK/pkg.dmg" -nobrowse -readonly | grep -o '/Volumes/.*'
 # cp -RL follows symlinks so the bundle contains real files only (the installer's
 # copy_tree rejects symlinks as a path-escape guard). Copy the loadable libs.
 for f in "$MP"/*.dylib*; do [ -e "$f" ] && cp -RL "$f" "$STAGE/"; done
+
+# OTN condition: Oracle's notices must travel WITH the redistributed libraries.
+# The Instant Client package carries them beside the libs as BASIC_LICENSE / BASIC_README
+# (verified against instantclient-basic-linux.x64-23.26.3.0.0). Fail loudly if none is
+# found rather than shipping a bundle that silently drops the licence.
+echo "==> stage Oracle notices (BASIC_LICENSE / BASIC_README)"
+found=0
+for f in "$MP"/*LICENSE* "$MP"/*README*; do
+  [ -e "$f" ] || continue
+  cp -RL "$f" "$STAGE/"; found=$((found+1))
+done
+[ "$found" -gt 0 ] || { echo "ERROR: no Oracle LICENSE/README found in $MP - refusing to ship without the notices"; exit 4; }
+echo "    staged $found notice file(s)"
 hdiutil detach "$MP" >/dev/null; MP=""
 
 echo "==> rewrite load paths -> @loader_path (libs find siblings with no DYLD)"

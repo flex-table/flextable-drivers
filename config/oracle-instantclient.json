@@ -1,29 +1,80 @@
 {
   "_comment": "Pinned Oracle Instant Client BASIC sources per (os, arch). Every URL is an official Oracle download; every sha256 is verified before bundling. major=23 (IC is backward-compatible -> one major, not per-server-version). BASIC (full charset/libociei), not Basic Lite. Redistribution is under the OTN license (see the app repo docs/legal/oracle-instant-client.md) - keep these bytes OUT of the freely-licensed cli-tools manifest.",
   "namespace": "oracle-instantclient",
-  "major": "23",
   "package": "basic",
-  "targets": {
-    "macos-arm64": {
-      "url": "https://download.oracle.com/otn_software/mac/instantclient/233023/instantclient-basic-macos.arm64-23.3.0.23.09-1.dmg",
-      "sha256": "1bcddb583870f70c232d579edb8a32fd58497028a4eff1ad28ece0397ba8d7fe",
-      "format": "dmg"
+  "_majors_comment": "Instant Client majors this namespace ships, each with its own pinned (url, sha256) per (os, arch). A (major, platform) cell Oracle does not publish is recorded with a TODO url so the build SKIPS it with a warning instead of failing - the app then falls back to the manual-install hint for that cell. defaultMajor is what `build.yml` targets when its `major` input is blank.",
+  "defaultMajor": "23",
+  "majors": {
+    "23": {
+      "_comment": "23ai. LIVE on drivers.flextable.dev. macOS Intel is N/A - Oracle ships no 23.x IC for it (it stopped at 19.x).",
+      "targets": {
+        "macos-arm64": {
+          "url": "https://download.oracle.com/otn_software/mac/instantclient/233023/instantclient-basic-macos.arm64-23.3.0.23.09-1.dmg",
+          "sha256": "1bcddb583870f70c232d579edb8a32fd58497028a4eff1ad28ece0397ba8d7fe",
+          "format": "dmg"
+        },
+        "linux-x86_64": {
+          "url": "https://download.oracle.com/otn_software/linux/instantclient/2326300/instantclient-basic-linux.x64-23.26.3.0.0.zip",
+          "sha256": "fce485361332927f8328ea4b68d98968c6b0ea124e62470de8c9d0cef880130e",
+          "format": "zip"
+        },
+        "windows-x86_64": {
+          "url": "https://download.oracle.com/otn_software/nt/instantclient/2326300/instantclient-basic-windows.x64-23.26.3.0.0.zip",
+          "sha256": "4c7fe8a77f6b9a00d57214ffda241f14f79dad5774a8f53073b7497e54b51763",
+          "format": "zip"
+        },
+        "macos-x86_64": {
+          "_deferred": "DEFERRED, not a pending backfill: Oracle ships NO 23.x Instant Client for macOS Intel - it stopped at 19.8 (21c/23c are Apple-Silicon-only on macOS). Intel Macs are a shrinking niche, so this target is intentionally skipped (the build plan skips a TODO url). To enable it, pin the 19.8 macOS-x64 Basic DMG + sha here (accepting a 19.x client for Intel while other platforms run 23.x).",
+          "url": "TODO-deferred-oracle-has-no-23x-macos-intel-ic",
+          "sha256": "TODO-deferred",
+          "format": "dmg"
+        }
+      }
     },
-    "linux-x86_64": {
-      "url": "https://download.oracle.com/otn_software/linux/instantclient/2326300/instantclient-basic-linux.x64-23.26.3.0.0.zip",
-      "sha256": "fce485361332927f8328ea4b68d98968c6b0ea124e62470de8c9d0cef880130e",
-      "format": "zip"
+    "19": {
+      "_comment": "19c. Linux/Windows pin 19.32 (current 19 patch); macOS Intel pins 19.16 (the last Intel IC). macOS arm64 does not exist - see the target note.",
+      "targets": {
+        "linux-x86_64": {
+          "url": "https://download.oracle.com/otn_software/linux/instantclient/1932000/instantclient-basic-linux.x64-19.32.0.0.0dbru.zip",
+          "sha256": "1749ca1eb5f75b038f2b7ce0abc42eb4575928159259fc4fc851c54a8ca7b002",
+          "format": "zip"
+        },
+        "windows-x86_64": {
+          "url": "https://download.oracle.com/otn_software/nt/instantclient/1932000/instantclient-basic-windows.x64-19.32.0.0.0dbru.zip",
+          "sha256": "e95a66eb4e69e2fb28880cbd252e8eab9807b877c4248c0d50a28f7b75cfe878",
+          "format": "zip"
+        },
+        "macos-x86_64": {
+          "url": "https://download.oracle.com/otn_software/mac/instantclient/1916000/instantclient-basic-macos.x64-19.16.0.0.0dbru.dmg",
+          "sha256": "725eeb7c00041e926b57c3db508ea7439a1935a37f480c0ac6d46eddc4205331",
+          "format": "dmg"
+        },
+        "macos-arm64": {
+          "_unavailable": "NOT A PENDING BACKFILL - Oracle publishes NO 19.x Instant Client for macOS arm64. The macOS ARM download page lists only 23.26.x. On Apple Silicon, 23 is the ONLY Instant Client, so a 19 selection there can never be satisfied and the app must fall back to 23 (verified against Oracle's macos-arm64 downloads page 2026-09-05).",
+          "url": "TODO-unavailable-oracle-ships-no-19x-instant-client-for-macos-arm64",
+          "sha256": "TODO-unavailable",
+          "format": "dmg"
+        }
+      },
+      "_notDistributed": "DECIDED NOT TO DISTRIBUTE (2026-09-05). The pins below are REAL and verified (sha256 computed from the downloaded bytes) and are kept so the decision can be reversed cheaply - but 19 must NOT be built or published. Reasons: (a) redistributing Instant Client is governed by the OTN licence and every additional version x platform widens a review that is still unresolved for the 'redistribute unmodified' condition (our bundles run patchelf / install_name_tool / re-sign); (b) Oracle publishes NO 19.x client for macOS arm64, so 19 can never be the universal answer anyway. Users who need a 19 client install it themselves and point the app at it. Only major 23 is distributed."
     },
-    "windows-x86_64": {
-      "url": "https://download.oracle.com/otn_software/nt/instantclient/2326300/instantclient-basic-windows.x64-23.26.3.0.0.zip",
-      "sha256": "4c7fe8a77f6b9a00d57214ffda241f14f79dad5774a8f53073b7497e54b51763",
-      "format": "zip"
-    },
-    "macos-x86_64": {
-      "_deferred": "DEFERRED, not a pending backfill: Oracle ships NO 23.x Instant Client for macOS Intel - it stopped at 19.8 (21c/23c are Apple-Silicon-only on macOS). Intel Macs are a shrinking niche, so this target is intentionally skipped (the build plan skips a TODO url). To enable it, pin the 19.8 macOS-x64 Basic DMG + sha here (accepting a 19.x client for Intel while other platforms run 23.x).",
-      "url": "TODO-deferred-oracle-has-no-23x-macos-intel-ic",
-      "sha256": "TODO-deferred",
-      "format": "dmg"
+    "11": {
+      "_comment": "11.2.0.4 legacy client for 10g/11g servers. Blocked on the OTN login wall - see each target note.",
+      "targets": {
+        "linux-x86_64": {
+          "_blocked": "TECHNICALLY BLOCKED, not merely unpinned. Oracle serves 11.2.0.4 only from the login-gated /otn/ path: the URL 302s to login-ext.identity.oraclecloud.com and returns an HTML sign-in page, not the archive (verified 2026-09-05). The bundlers fetch with a plain `curl -fL` and have no Oracle credentials, so 11.2 CANNOT be built by this workflow as it stands. Enabling it needs an authenticated download step (Oracle account secrets, which must NOT live in this public repo) or a manually mirrored copy.",
+          "url": "TODO-blocked-oracle-11.2-is-behind-the-otn-login-wall",
+          "sha256": "TODO-blocked",
+          "format": "zip"
+        },
+        "windows-x86_64": {
+          "_blocked": "TECHNICALLY BLOCKED, not merely unpinned. Oracle serves 11.2.0.4 only from the login-gated /otn/ path: the URL 302s to login-ext.identity.oraclecloud.com and returns an HTML sign-in page, not the archive (verified 2026-09-05). The bundlers fetch with a plain `curl -fL` and have no Oracle credentials, so 11.2 CANNOT be built by this workflow as it stands. Enabling it needs an authenticated download step (Oracle account secrets, which must NOT live in this public repo) or a manually mirrored copy.",
+          "url": "TODO-blocked-oracle-11.2-is-behind-the-otn-login-wall",
+          "sha256": "TODO-blocked",
+          "format": "zip"
+        }
+      },
+      "_notDistributed": "DECIDED NOT TO DISTRIBUTE (2026-09-05), and technically impossible regardless: 11.2.0.4 is served only from Oracle's login-gated /otn/ path. Users install it themselves."
     }
   }
 }
