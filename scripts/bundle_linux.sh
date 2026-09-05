@@ -74,6 +74,21 @@ fi
 cp -L "$AIO" "$STAGE/libaio.so.1"
 echo "    bundled $AIO -> libaio.so.1"
 
+# libaio is third-party (LGPL-2.1), so the same rule we apply to Oracle's notices applies
+# to it: if we redistribute the library, its licence travels with it. Take the copyright
+# file from the package that owns the .so we just copied.
+AIO_REAL="$(readlink -f "$AIO")"
+AIO_PKG="$(dpkg -S "$AIO_REAL" 2>/dev/null | cut -d: -f1 | head -1)"
+[ -n "$AIO_PKG" ] || AIO_PKG="$(dpkg -S "$AIO" 2>/dev/null | cut -d: -f1 | head -1)"
+AIO_COPYRIGHT=""
+[ -n "$AIO_PKG" ] && [ -f "/usr/share/doc/${AIO_PKG}/copyright" ] && AIO_COPYRIGHT="/usr/share/doc/${AIO_PKG}/copyright"
+if [ -z "$AIO_COPYRIGHT" ]; then
+  for c in /usr/share/doc/libaio*/copyright; do [ -f "$c" ] && { AIO_COPYRIGHT="$c"; break; }; done
+fi
+[ -n "$AIO_COPYRIGHT" ] || { echo "ERROR: bundling libaio but its licence was not found - refusing to redistribute it without one"; exit 5; }
+cp -L "$AIO_COPYRIGHT" "$STAGE/libaio-COPYRIGHT"
+echo "    bundled $AIO_COPYRIGHT -> libaio-COPYRIGHT"
+
 echo "==> set rpath \$ORIGIN so siblings resolve with no LD_LIBRARY_PATH"
 command -v patchelf >/dev/null || { sudo apt-get update -y && sudo apt-get install -y patchelf; }
 for so in "$STAGE"/*.so*; do patchelf --set-rpath '$ORIGIN' "$so" 2>/dev/null || true; done
