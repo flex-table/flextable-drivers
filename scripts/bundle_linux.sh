@@ -14,8 +14,18 @@ NS="${1:?namespace}"; MAJOR="${2:?major}"; ARCH="${3:?arch}"; OUT="${4:?out dir}
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TARGET="linux-${ARCH}"; CFG="${ROOT}/config/${NS}.json"
 
-URL="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['targets'][sys.argv[2]]['url'])" "$CFG" "$TARGET")"
-SHA="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['targets'][sys.argv[2]]['sha256'])" "$CFG" "$TARGET")"
+# Multi-major configs nest their pinned targets under `majors.<major>.targets`; the
+# original single-major shape kept a flat `targets` map. Read BOTH so a namespace that
+# only ever ships one major needs no migration.
+PIN="$(python3 -c '
+import json,sys
+cfg=json.load(open(sys.argv[1])); target=sys.argv[2]; major=str(sys.argv[3])
+t=(cfg.get("majors",{}).get(major,{}).get("targets") or cfg.get("targets",{})).get(target)
+if not t: raise SystemExit("target %s (major %s) not pinned in config" % (target, major))
+print(t["url"]); print(t["sha256"])
+' "$CFG" "$TARGET" "$MAJOR")"
+URL="$(printf "%s\n" "$PIN" | sed -n 1p)"
+SHA="$(printf "%s\n" "$PIN" | sed -n 2p)"
 case "$URL$SHA" in *TODO*) echo "ERROR: $TARGET not pinned in $CFG (URL/sha are TODO)"; exit 2;; esac
 
 NAME="${NS}-${MAJOR}-linux-${ARCH}"; STAGE="${OUT}/${NAME}"; WORK="$(mktemp -d)"

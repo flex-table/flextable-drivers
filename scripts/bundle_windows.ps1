@@ -17,7 +17,10 @@ $ErrorActionPreference = 'Stop'
 $root   = Split-Path -Parent $PSScriptRoot
 $target = "windows-$Arch"
 $cfg    = Join-Path $root "config/$Namespace.json"
-$t      = (Get-Content $cfg -Raw | ConvertFrom-Json).targets.$target
+# Multi-major configs nest pinned targets under `majors.<major>.targets`; the original
+# single-major shape kept a flat `targets`. Read BOTH so single-major namespaces need no migration.
+$cfgObj = Get-Content $cfg -Raw | ConvertFrom-Json
+$t      = if ($cfgObj.PSObject.Properties.Name -contains 'majors') { $cfgObj.majors.$Major.targets.$target } else { $cfgObj.targets.$target }
 if (-not $t -or $t.url -like '*TODO*' -or $t.sha256 -like '*TODO*') {
   throw "ERROR: $target not pinned in $cfg (URL/sha are TODO)"
 }
