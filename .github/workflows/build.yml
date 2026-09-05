@@ -59,6 +59,14 @@ jobs:
               major = req or str(cfg["defaultMajor"])
               if major not in cfg["majors"]:
                   raise SystemExit(f"major {major} not in config/{ns}.json (have: {sorted(cfg['majors'])})")
+              # A major can be pinned-but-deliberately-not-distributed (see `_notDistributed`
+              # in the config). Refuse to build it: the pins are kept only so the decision is
+              # cheap to reverse, not as an invitation to publish.
+              if "_notDistributed" in cfg["majors"][major]:
+                  raise SystemExit(
+                      f"major {major} is marked NOT DISTRIBUTED in config/{ns}.json - refusing to build.\n"
+                      f"reason: {cfg['majors'][major]['_notDistributed']}"
+                  )
               targets = cfg["majors"][major]["targets"]
           else:
               major = str(cfg["major"])

@@ -55,7 +55,8 @@
           "sha256": "TODO-unavailable",
           "format": "dmg"
         }
-      }
+      },
+      "_notDistributed": "DECIDED NOT TO DISTRIBUTE (2026-09-05). The pins below are REAL and verified (sha256 computed from the downloaded bytes) and are kept so the decision can be reversed cheaply - but 19 must NOT be built or published. Reasons: (a) redistributing Instant Client is governed by the OTN licence and every additional version x platform widens a review that is still unresolved for the 'redistribute unmodified' condition (our bundles run patchelf / install_name_tool / re-sign); (b) Oracle publishes NO 19.x client for macOS arm64, so 19 can never be the universal answer anyway. Users who need a 19 client install it themselves and point the app at it. Only major 23 is distributed."
     },
     "11": {
       "_comment": "11.2.0.4 legacy client for 10g/11g servers. Blocked on the OTN login wall - see each target note.",
@@ -72,7 +73,8 @@
           "sha256": "TODO-blocked",
           "format": "zip"
         }
-      }
+      },
+      "_notDistributed": "DECIDED NOT TO DISTRIBUTE (2026-09-05), and technically impossible regardless: 11.2.0.4 is served only from Oracle's login-gated /otn/ path. Users install it themselves."
     }
   }
 }
