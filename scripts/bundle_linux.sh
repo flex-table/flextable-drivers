@@ -42,6 +42,25 @@ unzip -q "$WORK/pkg.zip" -d "$WORK/x"
 ICDIR="$(dirname "$(find "$WORK/x" -name 'libclntsh.so*' | head -1)")"
 for f in "$ICDIR"/*.so*; do [ -e "$f" ] && cp -L "$f" "$STAGE/"; done
 
+echo "==> bundle libaio.so.1 (the client's DT_NEEDED)"
+# The Instant Client links against libaio.so.1, which is NOT part of Oracle's zip and is
+# absent on minimal distros/containers -> DPI-1047 "libaio.so.1: cannot open shared object
+# file". Ubuntu 24.04 further renamed the package to libaio1t64 (soname libaio.so.1t64),
+# so the system file may not even be called libaio.so.1. We therefore copy whatever the
+# host has and install it under the name the client actually asks for (libaio.so.1) in the
+# bundle root; $ORIGIN is on the search path, so the loader satisfies DT_NEEDED from the
+# bundle with no system package. The 1t64 build is the 64-bit-time_t rebuild of the same
+# ABI, so serving it under the legacy name is safe for these calls.
+command -v ldconfig >/dev/null || true
+AIO="$(ldconfig -p 2>/dev/null | awk '/libaio\.so\.1(t64)?$/ {print $NF; exit}')"
+if [ -z "${AIO:-}" ]; then
+  sudo apt-get update -y && { sudo apt-get install -y libaio1 || sudo apt-get install -y libaio1t64; }
+  AIO="$(ldconfig -p 2>/dev/null | awk '/libaio\.so\.1(t64)?$/ {print $NF; exit}')"
+fi
+[ -n "${AIO:-}" ] || { echo "ERROR: libaio.so.1 not found on the build host"; exit 3; }
+cp -L "$AIO" "$STAGE/libaio.so.1"
+echo "    bundled $AIO -> libaio.so.1"
+
 echo "==> set rpath \$ORIGIN so siblings resolve with no LD_LIBRARY_PATH"
 command -v patchelf >/dev/null || { sudo apt-get update -y && sudo apt-get install -y patchelf; }
 for so in "$STAGE"/*.so*; do patchelf --set-rpath '$ORIGIN' "$so" 2>/dev/null || true; done
